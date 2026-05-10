@@ -220,3 +220,17 @@ code, pre, kbd {
 .url-part-path     { background: rgba(45,122,79,0.08); color: #2D7A4F; }
 .url-part-query    { background: rgba(200,151,62,0.08); color: var(--ts-gold); }
 .url-part-hash     { background: rgba(184,50,50,0.08); color: #A03030; }
+
+/* ── Regex Tester tokens ─────────────────────────────────────── */
+.regex-match            { border-radius: 2px; padding: 1px 0; cursor: pointer; transition: background 0.15s; }
+.regex-match.match-even { background: rgba(200,151,62,0.25); }
+.regex-match.match-odd  { background: rgba(45,122,79,0.20); }
+.regex-match.active     { background: rgba(200,151,62,0.55); outline: 2px solid var(--ts-gold); outline-offset: 1px; }
+
+.ref-syntax { font-family: var(--font-mono); font-size: 12px; background: var(--ts-surface);
+              border: 0.5px solid var(--ts-border); border-radius: 4px; padding: 1px 6px;
+              color: var(--ts-gold); }
+
+.code-block { background: var(--ts-ink-900); color: var(--ts-bg); border-radius: 10px;
+              padding: 16px; font-family: var(--font-mono); font-size: 12.5px;
+              line-height: 1.7; overflow-x: auto; }
