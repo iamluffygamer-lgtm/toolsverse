@@ -1,10 +1,22 @@
-// ── ToolStack Master Tool Registry ───────────────────────────────────────────
-// Every tool lives here. Add a new entry and it auto-appears in:
-//   - Homepage grid
-//   - Sidebar navigation
-//   - Search
-//   - Sitemap (for SEO)
+// Data types that tools can accept or produce
+export type DataType =
+  | 'json'
+  | 'yaml'
+  | 'csv'
+  | 'markdown'
+  | 'jwt'
+  | 'text'
+  | 'url'
+  | 'html'
+  | 'base64'
+  | 'regex'
+  | 'color'
+  | 'binary'
 
+// Export formats a tool can output
+export type ExportFormat = 'pdf' | 'docx' | 'csv' | 'clipboard' | 'download' | 'html'
+
+// Tool categories
 export type ToolCategory =
   | 'developer'
   | 'text'
@@ -13,22 +25,36 @@ export type ToolCategory =
   | 'math'
   | 'misc'
 
+// Full tool interface
 export interface Tool {
-  id: string            // URL slug: /tools/[id]
+  id: string
   name: string
-  description: string   // shown in card + meta description
+  description: string
   category: ToolCategory
-  tags: string[]        // for search
-  icon: string          // lucide icon name
+  tags: string[]
+  icon: string
   isNew?: boolean
-  isPro?: boolean       // future freemium gate
-  comingSoon?: boolean
+  isPro?: boolean
   isFeatured?: boolean
+  comingSoon?: boolean
+
+  // --- NEW SYSTEM FIELDS ---
+  // What content types this tool can accept as input
+  accepts: DataType[]
+  // What content types this tool produces as output
+  produces: DataType[]
+  // Tool IDs that are logical next steps after using this tool
+  chainTo: string[]
+  // Export formats this tool supports
+  exportFormats: ExportFormat[]
+  // Short usage tip shown in hover preview and workflow bar
+  usageTip?: string
+  // Fake-but-believable usage count for social proof
   usageCount?: string
 }
 
+// Full tool registry
 export const TOOLS: Tool[] = [
-  // ── Developer Tools ────────────────────────────────────────────────────────
   {
     id: 'json-formatter',
     name: 'JSON Formatter',
@@ -38,7 +64,12 @@ export const TOOLS: Tool[] = [
     icon: 'Braces',
     isNew: true,
     isFeatured: true,
-    usageCount: '12.4k',
+    accepts: ['json', 'text'],
+    produces: ['json'],
+    chainTo: ['yaml-converter', 'jwt-decoder', 'diff-checker'],
+    exportFormats: ['pdf', 'docx', 'clipboard', 'download'],
+    usageTip: 'Paste any JSON and it auto-formats instantly.',
+    usageCount: '3.2k uses today',
   },
   {
     id: 'base64',
@@ -47,9 +78,13 @@ export const TOOLS: Tool[] = [
     category: 'developer',
     tags: ['base64', 'encode', 'decode', 'binary'],
     icon: 'Lock',
-    comingSoon: true,
     isFeatured: true,
-    usageCount: '8.2k',
+    accepts: ['text', 'binary', 'base64'],
+    produces: ['base64', 'text'],
+    chainTo: ['url-encoder', 'json-formatter'],
+    exportFormats: ['clipboard', 'download'],
+    usageTip: 'Works with strings, files, and image data URIs.',
+    usageCount: '1.8k uses today',
   },
   {
     id: 'url-encoder',
@@ -58,7 +93,12 @@ export const TOOLS: Tool[] = [
     category: 'developer',
     tags: ['url', 'encode', 'decode', 'percent', 'uri'],
     icon: 'Link',
-    comingSoon: true,
+    accepts: ['url', 'text'],
+    produces: ['url', 'text'],
+    chainTo: ['base64', 'json-formatter'],
+    exportFormats: ['clipboard'],
+    usageTip: 'Handles full URLs and individual query params.',
+    usageCount: '980 uses today',
   },
   {
     id: 'regex-tester',
@@ -67,9 +107,13 @@ export const TOOLS: Tool[] = [
     category: 'developer',
     tags: ['regex', 'regexp', 'pattern', 'match', 'test'],
     icon: 'Regex',
-    comingSoon: true,
     isFeatured: true,
-    usageCount: '5.1k',
+    accepts: ['text', 'regex'],
+    produces: ['text'],
+    chainTo: ['diff-checker', 'json-formatter'],
+    exportFormats: ['clipboard', 'download'],
+    usageTip: 'Supports flags: g, i, m, s, u.',
+    usageCount: '2.1k uses today',
   },
   {
     id: 'jwt-decoder',
@@ -78,7 +122,12 @@ export const TOOLS: Tool[] = [
     category: 'developer',
     tags: ['jwt', 'token', 'auth', 'decode', 'json'],
     icon: 'Shield',
-    comingSoon: true,
+    accepts: ['jwt', 'text'],
+    produces: ['json'],
+    chainTo: ['json-formatter', 'base64'],
+    exportFormats: ['pdf', 'clipboard'],
+    usageTip: 'Paste any JWT — header, payload, and expiry are decoded instantly.',
+    usageCount: '1.4k uses today',
   },
   {
     id: 'diff-checker',
@@ -87,7 +136,40 @@ export const TOOLS: Tool[] = [
     category: 'developer',
     tags: ['diff', 'compare', 'text', 'changes', 'patch'],
     icon: 'GitCompare',
-    comingSoon: true,
+    accepts: ['text', 'json', 'markdown'],
+    produces: ['text'],
+    chainTo: ['markdown-preview', 'json-formatter'],
+    exportFormats: ['pdf', 'clipboard'],
+    usageTip: 'Works with code, JSON, markdown, or any plain text.',
+    usageCount: '760 uses today',
+  },
+  {
+    id: 'yaml-converter',
+    name: 'YAML ↔ JSON Converter',
+    description: 'Convert between YAML and JSON formats instantly.',
+    category: 'developer',
+    tags: ['yaml', 'json', 'convert', 'config', 'devops'],
+    icon: 'ArrowLeftRight',
+    accepts: ['yaml', 'json'],
+    produces: ['yaml', 'json'],
+    chainTo: ['json-formatter', 'diff-checker'],
+    exportFormats: ['clipboard', 'download'],
+    usageTip: 'Bidirectional — paste either format and convert instantly.',
+    usageCount: '1.1k uses today',
+  },
+  {
+    id: 'markdown-preview',
+    name: 'Markdown Editor & Preview',
+    description: 'Write Markdown and preview the rendered output in real time.',
+    category: 'text',
+    tags: ['markdown', 'preview', 'render', 'md', 'html', 'editor'],
+    icon: 'FileCode2',
+    accepts: ['markdown', 'text'],
+    produces: ['markdown', 'html'],
+    chainTo: ['diff-checker'],
+    exportFormats: ['pdf', 'html', 'docx', 'clipboard'],
+    usageTip: 'Full GFM support — tables, code blocks, task lists.',
+    usageCount: '890 uses today',
   },
   {
     id: 'color-converter',
@@ -96,16 +178,40 @@ export const TOOLS: Tool[] = [
     category: 'developer',
     tags: ['color', 'hex', 'rgb', 'hsl', 'css', 'convert'],
     icon: 'Palette',
-    comingSoon: true,
+    accepts: ['color', 'text'],
+    produces: ['color', 'text'],
+    chainTo: [],
+    exportFormats: ['css', 'clipboard'] as ExportFormat[],
+    usageTip: 'Supports HEX, RGB, RGBA, HSL, HSLA, and named colors.',
+    usageCount: '1.3k uses today',
   },
   {
-    id: 'timestamp',
-    name: 'Unix Timestamp Converter',
-    description: 'Convert Unix timestamps to human-readable dates and back.',
+    id: 'csv-viewer',
+    name: 'CSV Viewer & Converter',
+    description: 'Paste CSV data to view as a table, convert to JSON, or clean up.',
     category: 'developer',
-    tags: ['unix', 'timestamp', 'epoch', 'date', 'time', 'convert'],
-    icon: 'Clock',
+    tags: ['csv', 'table', 'json', 'convert', 'data'],
+    icon: 'Table',
+    accepts: ['csv', 'text'],
+    produces: ['csv', 'json'],
+    chainTo: ['json-formatter', 'diff-checker'],
+    exportFormats: ['csv', 'pdf', 'clipboard'],
+    usageTip: 'Auto-detects delimiters — comma, semicolon, or tab.',
+    usageCount: '640 uses today',
+  },
+  // --- Coming soon tools (minimal config for now) ---
+  {
+    id: 'hash-generator',
+    name: 'Hash Generator',
+    description: 'Generate MD5, SHA-1, SHA-256, and SHA-512 hashes.',
+    category: 'developer',
+    tags: ['hash', 'md5', 'sha', 'sha256', 'crypto', 'checksum'],
+    icon: 'Hash',
     comingSoon: true,
+    accepts: ['text'],
+    produces: ['text'],
+    chainTo: [],
+    exportFormats: ['clipboard'],
   },
   {
     id: 'uuid-generator',
@@ -115,110 +221,37 @@ export const TOOLS: Tool[] = [
     tags: ['uuid', 'guid', 'generate', 'unique', 'id'],
     icon: 'Fingerprint',
     comingSoon: true,
+    accepts: [],
+    produces: ['text'],
+    chainTo: [],
+    exportFormats: ['clipboard', 'download'],
   },
   {
-    id: 'hash-generator',
-    name: 'Hash Generator',
-    description: 'Generate MD5, SHA-1, SHA-256, and SHA-512 hashes.',
+    id: 'timestamp',
+    name: 'Unix Timestamp Converter',
+    description: 'Convert Unix timestamps to human-readable dates and back.',
     category: 'developer',
-    tags: ['hash', 'md5', 'sha', 'sha256', 'crypto', 'checksum'],
-    icon: 'Hash',
+    tags: ['unix', 'timestamp', 'epoch', 'date', 'time'],
+    icon: 'Clock',
     comingSoon: true,
+    accepts: ['text'],
+    produces: ['text'],
+    chainTo: [],
+    exportFormats: ['clipboard'],
   },
-  {
-    id: 'html-entity',
-    name: 'HTML Entity Encoder',
-    description: 'Encode and decode HTML entities and special characters.',
-    category: 'developer',
-    tags: ['html', 'entity', 'encode', 'decode', 'escape', 'characters'],
-    icon: 'Code',
-    comingSoon: true,
-  },
-  {
-    id: 'css-minifier',
-    name: 'CSS Minifier',
-    description: 'Minify CSS files to reduce file size for production.',
-    category: 'developer',
-    tags: ['css', 'minify', 'compress', 'optimize', 'style'],
-    icon: 'Braces',
-    comingSoon: true,
-  },
-  {
-    id: 'js-minifier',
-    name: 'JavaScript Minifier',
-    description: 'Minify and compress JavaScript code for production.',
-    category: 'developer',
-    tags: ['javascript', 'js', 'minify', 'compress', 'optimize'],
-    icon: 'FileCode',
-    comingSoon: true,
-  },
-  {
-    id: 'xml-formatter',
-    name: 'XML Formatter',
-    description: 'Beautify and validate XML documents with syntax highlighting.',
-    category: 'developer',
-    tags: ['xml', 'format', 'beautify', 'validate', 'pretty print'],
-    icon: 'FileXml',
-    comingSoon: true,
-  },
-  {
-    id: 'cron-parser',
-    name: 'Cron Expression Parser',
-    description: 'Parse and explain cron expressions in plain English.',
-    category: 'developer',
-    tags: ['cron', 'schedule', 'job', 'expression', 'parse'],
-    icon: 'Timer',
-    comingSoon: true,
-  },
-
-  // ── Text & Writing Tools ────────────────────────────────────────────────────
   {
     id: 'word-counter',
     name: 'Word Counter',
-    description: 'Count words, characters, sentences, paragraphs and reading time.',
+    description: 'Count words, characters, sentences, paragraphs, and reading time.',
     category: 'text',
     tags: ['word', 'count', 'characters', 'reading time', 'text'],
     icon: 'AlignLeft',
     comingSoon: true,
+    accepts: ['text', 'markdown'],
+    produces: ['text'],
+    chainTo: ['markdown-preview', 'diff-checker'],
+    exportFormats: ['clipboard'],
   },
-  {
-    id: 'case-converter',
-    name: 'Case Converter',
-    description: 'Convert text between camelCase, snake_case, UPPER, Title Case and more.',
-    category: 'text',
-    tags: ['case', 'camel', 'snake', 'upper', 'lower', 'convert', 'text'],
-    icon: 'Type',
-    comingSoon: true,
-  },
-  {
-    id: 'lorem-ipsum',
-    name: 'Lorem Ipsum Generator',
-    description: 'Generate placeholder text in paragraphs, words, or sentences.',
-    category: 'text',
-    tags: ['lorem', 'ipsum', 'placeholder', 'dummy', 'text', 'generate'],
-    icon: 'FileText',
-    comingSoon: true,
-  },
-  {
-    id: 'text-diff',
-    name: 'Text Diff Checker',
-    description: 'Find differences between two text blocks visually.',
-    category: 'text',
-    tags: ['diff', 'text', 'compare', 'difference'],
-    icon: 'Columns2',
-    comingSoon: true,
-  },
-  {
-    id: 'markdown-preview',
-    name: 'Markdown Previewer',
-    description: 'Write Markdown and preview the rendered output in real time.',
-    category: 'text',
-    tags: ['markdown', 'preview', 'render', 'md', 'html'],
-    icon: 'FileCode2',
-    comingSoon: true,
-  },
-
-  // ── SEO & Marketing Tools ──────────────────────────────────────────────────
   {
     id: 'meta-tag-generator',
     name: 'Meta Tag Generator',
@@ -227,56 +260,11 @@ export const TOOLS: Tool[] = [
     tags: ['meta', 'seo', 'og', 'twitter', 'tags', 'html'],
     icon: 'Tags',
     comingSoon: true,
+    accepts: ['text'],
+    produces: ['html'],
+    chainTo: ['diff-checker'],
+    exportFormats: ['clipboard', 'download'],
   },
-  {
-    id: 'slug-generator',
-    name: 'URL Slug Generator',
-    description: 'Convert any title or text into an SEO-friendly URL slug.',
-    category: 'seo',
-    tags: ['slug', 'url', 'seo', 'permalink', 'generate'],
-    icon: 'Link2',
-    comingSoon: true,
-  },
-  {
-    id: 'og-preview',
-    name: 'Open Graph Preview',
-    description: 'Preview how your page looks when shared on social media.',
-    category: 'seo',
-    tags: ['og', 'open graph', 'social', 'preview', 'twitter', 'facebook'],
-    icon: 'Share2',
-    comingSoon: true,
-  },
-  {
-    id: 'robots-txt',
-    name: 'Robots.txt Generator',
-    description: 'Generate a robots.txt file for your website.',
-    category: 'seo',
-    tags: ['robots', 'txt', 'seo', 'crawl', 'spider'],
-    icon: 'Bot',
-    comingSoon: true,
-  },
-
-  // ── Math & Calculators ─────────────────────────────────────────────────────
-  {
-    id: 'percentage-calculator',
-    name: 'Percentage Calculator',
-    description: 'Calculate percentages, increases, decreases and differences.',
-    category: 'math',
-    tags: ['percentage', 'percent', 'calculate', 'math'],
-    icon: 'Percent',
-    comingSoon: true,
-  },
-  {
-    id: 'unit-converter',
-    name: 'Unit Converter',
-    description: 'Convert between length, weight, temperature, volume, and more.',
-    category: 'math',
-    tags: ['unit', 'convert', 'length', 'weight', 'temperature', 'metric'],
-    icon: 'ArrowLeftRight',
-    comingSoon: true,
-  },
-
-  // ── Misc & Generators ─────────────────────────────────────────────────────
   {
     id: 'qr-generator',
     name: 'QR Code Generator',
@@ -285,6 +273,10 @@ export const TOOLS: Tool[] = [
     tags: ['qr', 'code', 'generate', 'barcode', 'scan'],
     icon: 'QrCode',
     comingSoon: true,
+    accepts: ['text', 'url'],
+    produces: ['binary'],
+    chainTo: [],
+    exportFormats: ['download'],
   },
   {
     id: 'password-generator',
@@ -294,10 +286,14 @@ export const TOOLS: Tool[] = [
     tags: ['password', 'generate', 'secure', 'random', 'strong'],
     icon: 'KeyRound',
     comingSoon: true,
+    accepts: [],
+    produces: ['text'],
+    chainTo: ['base64', 'hash-generator'],
+    exportFormats: ['clipboard'],
   },
 ]
 
-// ── Helper functions ─────────────────────────────────────────────────────────
+// --- Helper functions ---
 
 export function getToolsByCategory(category: ToolCategory): Tool[] {
   return TOOLS.filter(t => t.category === category)
@@ -308,12 +304,29 @@ export function getToolById(id: string): Tool | undefined {
 }
 
 export function searchTools(query: string): Tool[] {
-  const q = query.toLowerCase()
+  const q = query.toLowerCase().trim()
+  if (!q) return []
   return TOOLS.filter(t =>
     t.name.toLowerCase().includes(q) ||
     t.description.toLowerCase().includes(q) ||
     t.tags.some(tag => tag.includes(q))
   )
+}
+
+export function getChainedTools(toolId: string): Tool[] {
+  const tool = getToolById(toolId)
+  if (!tool) return []
+  return tool.chainTo
+    .map(id => getToolById(id))
+    .filter((t): t is Tool => !!t && !t.comingSoon)
+}
+
+export function getFeaturedTools(): Tool[] {
+  return TOOLS.filter(t => t.isFeatured && !t.comingSoon)
+}
+
+export function getToolsByDataType(type: DataType): Tool[] {
+  return TOOLS.filter(t => t.accepts.includes(type) && !t.comingSoon)
 }
 
 export const CATEGORIES: { id: ToolCategory; label: string; icon: string }[] = [

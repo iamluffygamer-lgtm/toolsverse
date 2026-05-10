@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import AdSlot from '@/components/AdSlot'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -66,6 +66,11 @@ const SAMPLE_JSON = JSON.stringify(
 
 // ── Component ──────────────────────────────────────────────────────────────────
 import PageTransition from '@/components/PageTransition'
+import ToolHeader from '@/components/ToolHeader'
+import WorkflowBar from '@/components/WorkflowBar'
+import ExportBar from '@/components/ExportBar'
+import { getToolById } from '@/lib/tools'
+import { consumeIncomingContent, addRecentTool } from '@/lib/session'
 
 export default function JsonFormatterPage() {
   const [input, setInput] = useState('')
@@ -74,7 +79,8 @@ export default function JsonFormatterPage() {
   const [mode, setMode] = useState<OutputMode>('idle')
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
-  const [copied, setCopied] = useState(false)
+
+  const tool = getToolById('json-formatter')!
 
   const inSize = fmtSize(new TextEncoder().encode(input).length)
 
@@ -88,6 +94,16 @@ export default function JsonFormatterPage() {
     setStats({ keys, depth, lines, size: outSize })
     setError(null)
   }
+
+  useEffect(() => {
+    addRecentTool('json-formatter')
+    const incoming = consumeIncomingContent()
+    if (incoming) {
+      setInput(incoming)
+      try { const p = JSON.parse(incoming); applyOutput(JSON.stringify(p, null, 2), p, 'formatted') }
+      catch { }
+    }
+  }, [])
 
   const handleFormat = useCallback(() => {
     try { const p = JSON.parse(input); applyOutput(JSON.stringify(p, null, 2), p, 'formatted') }
@@ -123,13 +139,6 @@ export default function JsonFormatterPage() {
     catch { }
   }
 
-  async function handleCopy() {
-    if (!output) return
-    await navigator.clipboard.writeText(output)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   // Live auto-format on input
   function handleInputChange(val: string) {
     setInput(val)
@@ -144,16 +153,7 @@ export default function JsonFormatterPage() {
   return (
     <PageTransition>
       {/* Page header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="pill">Developer</span>
-          <span className="badge">Tool #001</span>
-        </div>
-        <h1 className="text-2xl font-bold text-[--ts-ink-900] tracking-tight">JSON Formatter & Validator</h1>
-        <p className="text-sm text-[--ts-ink-500] mt-1">
-          Paste raw JSON to beautify, minify, or validate it instantly — with syntax highlighting and live stats.
-        </p>
-      </div>
+      <ToolHeader tool={tool} outputReady={!!output} />
 
       {/* Main card */}
       <div className="card p-0 overflow-hidden mb-4">
@@ -208,16 +208,6 @@ export default function JsonFormatterPage() {
               <span className="section-label">Output</span>
               <div className="flex items-center gap-2">
                 {stats && <span className="badge">{stats.size}</span>}
-                <button
-                  onClick={handleCopy}
-                  className={`btn text-xs ${copied ? 'text-[--ts-success]' : ''}`}
-                >
-                  {copied ? (
-                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg> Copied</>
-                  ) : (
-                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg> Copy</>
-                  )}
-                </button>
               </div>
             </div>
             <div
@@ -260,6 +250,9 @@ export default function JsonFormatterPage() {
       <div className="my-6 flex justify-center">
         <AdSlot size="rectangle" id="json-mid" />
       </div>
+
+      <WorkflowBar toolId="json-formatter" hasOutput={!!output} contentToPass={output} />
+      <ExportBar toolId="json-formatter" content={output} hasOutput={!!output} />
 
       {/* SEO content — critical for ranking */}
       <div className="prose-sm max-w-none mt-2">

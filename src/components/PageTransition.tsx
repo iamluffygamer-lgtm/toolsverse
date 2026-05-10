@@ -1,15 +1,18 @@
 'use client'
-import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 
 export default function PageTransition({ children }: { children: React.ReactNode }) {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 10); return () => clearTimeout(t) }, [])
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+    <div
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(8px)',
+        transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }

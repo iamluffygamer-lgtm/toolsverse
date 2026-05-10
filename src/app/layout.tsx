@@ -6,6 +6,7 @@ import Topbar from '@/components/Topbar'
 import AdSlot from '@/components/AdSlot'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import CommandPalette from '@/components/CommandPalette'
+import SmartPasteToast from '@/components/SmartPasteToast'
 
 const fontSans = Inter({
   variable: '--font-sans',
@@ -95,6 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </aside>
           </div>
         </div>
+        <SmartPasteToast />
         </ThemeProvider>
       </body>
     </html>
