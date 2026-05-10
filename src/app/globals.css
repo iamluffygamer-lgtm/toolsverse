@@ -209,3 +209,14 @@ code, pre, kbd {
   font-size: 11px;
   letter-spacing: 0.04em;
 }
+
+/* ── URL Encoder & Decoder tokens ────────────────────────────── */
+.sh-encoded { color: var(--ts-gold); font-weight: 500; }
+
+.url-part { border-radius: 3px; padding: 1px 3px; font-family: var(--font-mono); font-size: 13px; }
+.url-part-protocol { background: rgba(26,95,168,0.08); color: #1A5FA8; }
+.url-part-host     { background: var(--ts-gold-light); color: var(--ts-gold); }
+.url-part-port     { background: rgba(139,74,139,0.08); color: #7B4F9E; }
+.url-part-path     { background: rgba(45,122,79,0.08); color: #2D7A4F; }
+.url-part-query    { background: rgba(200,151,62,0.08); color: var(--ts-gold); }
+.url-part-hash     { background: rgba(184,50,50,0.08); color: #A03030; }
