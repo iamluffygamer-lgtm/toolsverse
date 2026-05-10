@@ -11,12 +11,20 @@ export interface PDFExportOptions extends ExportOptions {
   title?: string
 }
 
+export function normalizeUnicodeExport(input: string): string {
+  return input.normalize('NFC')
+}
+
+export function safeJsonExport(obj: unknown): string {
+  return normalizeUnicodeExport(JSON.stringify(obj, null, 2))
+}
+
 export async function exportToClipboard(content: string): Promise<void> {
-  await navigator.clipboard.writeText(content)
+  await navigator.clipboard.writeText(normalizeUnicodeExport(content))
 }
 
 export function exportAsDownload(content: string, filename: string, mimeType: string = 'text/plain'): void {
-  const blob = new Blob([content], { type: mimeType })
+  const blob = new Blob([normalizeUnicodeExport(content)], { type: `${mimeType};charset=utf-8` })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -28,99 +36,109 @@ export function exportAsDownload(content: string, filename: string, mimeType: st
 }
 
 export async function exportToPDF(options: PDFExportOptions): Promise<void> {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-  })
+  // Use browser print strategy to preserve Unicode characters (emoji, CJK, Arabic, etc)
+  const printWindow = window.open('', '_blank')
+  if (!printWindow) return
 
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  
-  const marginX = 20
-  const marginY = 14
-  const headerHeight = 28
-  
-  const contentWidth = pageWidth - (marginX * 2)
-  const contentStartY = headerHeight + marginY
-  const contentEndY = pageHeight - marginY - 10 // Leave space for footer
-
-  let currentPage = 1
-
-  function drawHeader() {
-    // Background: #0F0E0C (ink-900)
-    doc.setFillColor(15, 14, 12)
-    doc.rect(0, 0, pageWidth, headerHeight, 'F')
-    
-    // Left: ToolStack wordmark
-    doc.setTextColor(250, 248, 244) // #FAF8F4
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(16)
-    doc.text('ToolStack', marginX, headerHeight / 2, { baseline: 'middle' })
-    
-    // Right: tool name
-    doc.setTextColor(200, 151, 62) // #C8973E
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    doc.text(options.toolName, pageWidth - marginX, (headerHeight / 2) - 2, { align: 'right', baseline: 'middle' })
-    
-    // Right below tool name: export date
-    doc.setTextColor(140, 136, 128) // #8C8880
-    doc.setFontSize(8)
-    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-    doc.text(dateStr, pageWidth - marginX, (headerHeight / 2) + 4, { align: 'right', baseline: 'middle' })
-  }
-
-  function drawFooter(pageNum: number, totalPages?: number) {
-    const footerY = pageHeight - marginY
-    
-    // Separator line: #E0D9CE
-    doc.setDrawColor(224, 217, 206)
-    doc.line(marginX, footerY - 5, pageWidth - marginX, footerY - 5)
-    
-    // Left text
-    doc.setTextColor(140, 136, 128)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7)
-    doc.text('Generated with ToolStack · toolstack.dev', marginX, footerY)
-    
-    // Right text
-    if (totalPages) {
-      doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - marginX, footerY, { align: 'right' })
-    }
-  }
-
-  // Pre-process text
   const isCode = options.format !== 'prose'
-  doc.setFont(isCode ? 'courier' : 'helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.setTextColor(46, 43, 36) // #2E2B24
+  const safeContent = normalizeUnicodeExport(options.content)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 
-  // jsPDF handles text wrapping, but we need to manage pagination
-  const splitText: string[] = doc.splitTextToSize(options.content, contentWidth)
-  const lineHeight = doc.getLineHeight() * 1.5 / doc.internal.scaleFactor // mm
-  const linesPerPage = Math.floor((contentEndY - contentStartY) / lineHeight)
-  const totalPages = Math.ceil(splitText.length / linesPerPage) || 1
-
-  for (let i = 0; i < totalPages; i++) {
-    if (i > 0) doc.addPage()
-    
-    drawHeader()
-    
-    // Print content lines
-    const startLine = i * linesPerPage
-    const endLine = Math.min(startLine + linesPerPage, splitText.length)
-    const pageLines = splitText.slice(startLine, endLine)
-    
-    doc.setFont(isCode ? 'courier' : 'helvetica', 'normal')
-    doc.setFontSize(9)
-    doc.setTextColor(46, 43, 36)
-    
-    doc.text(pageLines, marginX, contentStartY, { lineHeightFactor: 1.5 })
-    
-    drawFooter(i + 1, totalPages)
-  }
-
-  const filename = options.filename || `toolstack-${options.toolName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.pdf`
-  doc.save(filename)
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${options.title || options.toolName}</title>
+  <style>
+    @page { margin: 14mm 20mm; }
+    body { 
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        "Noto Sans",
+        "Noto Sans JP",
+        "Noto Sans Arabic",
+        sans-serif;
+      color: #2E2B24;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .header {
+      background-color: #0F0E0C;
+      color: #FAF8F4;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header h1 { margin: 0; font-size: 16px; }
+    .header-right { text-align: right; color: #C8973E; font-size: 10px; }
+    .date { color: #8C8880; font-size: 8px; margin-top: 2px; }
+    .content {
+      font-family: ${isCode ? 'courier, monospace' : 'inherit'};
+      font-size: 9pt;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      padding: 0 20px;
+    }
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 20px;
+      right: 20px;
+      border-top: 1px solid #E0D9CE;
+      padding-top: 5px;
+      padding-bottom: 14px;
+      color: #8C8880;
+      font-size: 7pt;
+      display: flex;
+      justify-content: space-between;
+    }
+    @media screen {
+      body { padding: 20px; background: #f0f0f0; }
+      .page { background: white; max-width: 210mm; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding-bottom: 40px; position: relative; min-height: 297mm; }
+      .footer { position: absolute; bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <h1>ToolStack</h1>
+      <div class="header-right">
+        <div>${options.toolName}</div>
+        <div class="date">${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+      </div>
+    </div>
+    <div class="content">${safeContent}</div>
+    <div class="footer">
+      <span>Generated with ToolStack · toolstack.dev</span>
+    </div>
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(() => {
+        window.print();
+        window.close();
+      }, 250);
+    };
+  </script>
+</body>
+</html>
+  `
+  
+  printWindow.document.open()
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
 }

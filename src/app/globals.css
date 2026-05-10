@@ -234,3 +234,62 @@ code, pre, kbd {
 .code-block { background: var(--ts-ink-900); color: var(--ts-bg); border-radius: 10px;
               padding: 16px; font-family: var(--font-mono); font-size: 12.5px;
               line-height: 1.7; overflow-x: auto; }
+
+/* ── Diff Checker tokens ─────────────────────────────────────── */
+.diff-added   { background: rgba(45,122,79,0.08); }
+.diff-removed { background: rgba(184,50,50,0.08); }
+.diff-equal   { background: transparent; }
+
+.diff-char-added   { background: rgba(45,122,79,0.30); border-radius: 2px; }
+.diff-char-removed { background: rgba(184,50,50,0.30); border-radius: 2px; text-decoration: line-through; }
+
+.diff-line-num { color: var(--ts-ink-400); font-size: 11px; user-select: none;
+                 min-width: 2rem; text-align: right; padding-right: 12px; }
+
+.json-diff-added   { color: var(--ts-success); }
+.json-diff-removed { color: var(--ts-error); }
+.json-diff-changed { color: var(--ts-gold); }
+.json-diff-equal   { color: var(--ts-ink-400); }
+
+/* ── Markdown Editor & Preview tokens ────────────────────────── */
+.markdown-preview { color: var(--ts-ink-700); line-height: 1.7; }
+.markdown-preview h1 { font-size: 1.75rem; font-weight: 700; color: var(--ts-ink-900);
+                       margin: 1.5rem 0 0.75rem; border-bottom: 1px solid var(--ts-border);
+                       padding-bottom: 0.4rem; }
+.markdown-preview h2 { font-size: 1.35rem; font-weight: 600; color: var(--ts-ink-900);
+                       margin: 1.25rem 0 0.6rem; }
+.markdown-preview h3 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.markdown-preview p  { margin: 0 0 1rem; }
+.markdown-preview a  { color: var(--ts-gold); text-decoration: underline; }
+.markdown-preview a:hover { color: var(--ts-ink-900); }
+.markdown-preview strong { color: var(--ts-ink-900); font-weight: 600; }
+.markdown-preview code {
+  font-family: var(--font-mono); font-size: 0.85em;
+  background: var(--ts-surface); border: 0.5px solid var(--ts-border);
+  border-radius: 4px; padding: 1px 5px; color: var(--ts-gold);
+}
+.markdown-preview pre {
+  background: var(--ts-ink-900); border-radius: 10px;
+  padding: 16px; overflow-x: auto; margin: 1rem 0;
+}
+.markdown-preview pre code {
+  background: none; border: none; padding: 0;
+  color: var(--ts-bg); font-size: 0.875rem; line-height: 1.6;
+}
+.markdown-preview blockquote {
+  border-left: 3px solid var(--ts-gold); margin: 1rem 0;
+  padding: 0.5rem 0 0.5rem 1rem; color: var(--ts-ink-500);
+  background: var(--ts-gold-light); border-radius: 0 6px 6px 0;
+}
+.markdown-preview table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.markdown-preview th {
+  background: var(--ts-surface); font-weight: 600; color: var(--ts-ink-900);
+  padding: 8px 12px; border: 1px solid var(--ts-border); text-align: left;
+}
+.markdown-preview td { padding: 8px 12px; border: 1px solid var(--ts-border); }
+.markdown-preview tr:nth-child(even) { background: var(--ts-surface); }
+.markdown-preview ul, .markdown-preview ol { padding-left: 1.5rem; margin: 0 0 1rem; }
+.markdown-preview li { margin: 0.25rem 0; }
+.markdown-preview li input[type="checkbox"] { margin-right: 6px; accent-color: var(--ts-gold); }
+.markdown-preview hr { border: none; border-top: 1px solid var(--ts-border); margin: 1.5rem 0; }
+.markdown-preview img { max-width: 100%; border-radius: 8px; }
