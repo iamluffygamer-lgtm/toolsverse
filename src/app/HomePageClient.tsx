@@ -57,14 +57,17 @@ function useCountUp(target: number, duration: number = 2000) {
   return { count, ref }
 }
 
+import StatsCard from '@/components/ui/StatsCard'
+
 function StatCard({ stat }: { stat: typeof STATS[0] }) {
   const { count, ref } = useCountUp(stat.value, 1500)
   return (
-    <div ref={ref} className="flex flex-col items-center justify-center p-4">
-      <span className="text-3xl font-bold text-[--ts-ink-900]">
-        {count.toLocaleString()}{stat.suffix}
-      </span>
-      <span className="text-xs font-medium text-[--ts-ink-500] uppercase tracking-wider mt-1">{stat.label}</span>
+    <div ref={ref} className="h-full">
+      <StatsCard 
+        label={stat.label}
+        value={`${count.toLocaleString()}${stat.suffix}`}
+        className="h-full flex flex-col items-center justify-center !bg-transparent !border-none p-4"
+      />
     </div>
   )
 }

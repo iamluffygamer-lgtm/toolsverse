@@ -7,30 +7,9 @@ import WorkflowBar from '@/components/WorkflowBar'
 import ExportBar from '@/components/ExportBar'
 import { getToolById } from '@/lib/tools'
 import { consumeIncomingContent, addRecentTool } from '@/lib/session'
+import { encodeBase64, decodeBase64, formatByteSize } from '@/lib/unicode'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function fmtSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`
-}
-
-function encodeToBase64(text: string): string {
-  return btoa(
-    encodeURIComponent(text).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-      String.fromCharCode(parseInt(p1, 16))
-    )
-  )
-}
-
-function decodeFromBase64(base64: string): string {
-  const clean = base64.replace(/\s/g, '')
-  return decodeURIComponent(
-    atob(clean)
-      .split('')
-      .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-      .join('')
-  )
-}
 
 function isBase64(str: string): boolean {
   const clean = str.replace(/\s/g, '')
@@ -119,10 +98,10 @@ export default function Base64Page() {
     }
     try {
       if (currentMode === 'encode') {
-        setOutput(encodeToBase64(val))
+        setOutput(encodeBase64(val))
         setError(null)
       } else {
-        setOutput(decodeFromBase64(val))
+        setOutput(decodeBase64(val))
         setError(null)
       }
     } catch (e) {
@@ -213,8 +192,8 @@ export default function Base64Page() {
   // Stats Logic for Text Mode
   const inSize = new TextEncoder().encode(input).length
   const outSize = new TextEncoder().encode(output).length
-  const inSizeStr = fmtSize(inSize)
-  const outSizeStr = fmtSize(outSize)
+  const inSizeStr = formatByteSize(inSize)
+  const outSizeStr = formatByteSize(outSize)
   
   let compressionRatio = 0
   if (inSize > 0) {
@@ -262,8 +241,8 @@ export default function Base64Page() {
     const rawBase64 = fileOutput.split(',')[1] || ''
     const outBytes = new TextEncoder().encode(rawBase64).length
     statsCard = {
-      encodedSize: fmtSize(outBytes),
-      originalEstimate: fmtSize(file.size),
+      encodedSize: formatByteSize(outBytes),
+      originalEstimate: formatByteSize(file.size),
       overhead: file.size > 0 ? `+${(((outBytes - file.size) / file.size) * 100).toFixed(1)}%` : '0%',
       mime: file.type || 'unknown'
     }
@@ -272,8 +251,8 @@ export default function Base64Page() {
     const outBytes = new TextEncoder().encode(rawBase64).length
     const originalBytes = Math.floor((rawBase64.length * 3) / 4)
     statsCard = {
-      encodedSize: fmtSize(outBytes),
-      originalEstimate: fmtSize(originalBytes),
+      encodedSize: formatByteSize(outBytes),
+      originalEstimate: formatByteSize(originalBytes),
       overhead: originalBytes > 0 ? `+${(((outBytes - originalBytes) / originalBytes) * 100).toFixed(1)}%` : '0%',
       mime: detectedMime
     }
@@ -440,7 +419,7 @@ export default function Base64Page() {
                     <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                       <div className="text-xs text-[--ts-ink-500]">Filename: <span className="font-medium text-[--ts-ink-900]">{file.name}</span></div>
                       <div className="text-xs text-[--ts-ink-500]">Type: <span className="font-medium text-[--ts-ink-900]">{file.type || 'unknown'}</span></div>
-                      <div className="text-xs text-[--ts-ink-500]">Size: <span className="font-medium text-[--ts-ink-900]">{fmtSize(file.size)}</span></div>
+                      <div className="text-xs text-[--ts-ink-500]">Size: <span className="font-medium text-[--ts-ink-900]">{formatByteSize(file.size)}</span></div>
                       <div className="text-xs text-[--ts-ink-500]">Last Modified: <span className="font-medium text-[--ts-ink-900]">{new Date(file.lastModified).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>
                     </div>
                   </div>

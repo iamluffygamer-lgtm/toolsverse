@@ -7,6 +7,7 @@ import ExportBar from '@/components/ExportBar'
 import { getToolById } from '@/lib/tools'
 import { consumeIncomingContent, addRecentTool } from '@/lib/session'
 import { safeJsonExport } from '@/lib/export'
+import { decodeBase64Url } from '@/lib/unicode'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'decoder' | 'reference' | 'security'
@@ -67,18 +68,6 @@ const FAQS = [
 ]
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function decodeBase64Url(str: string): string {
-  try {
-    const base64 = str.replace(/-/g, '+').replace(/_/g, '/')
-    const padded = base64 + '=='.slice(0, (4 - base64.length % 4) % 4)
-    return decodeURIComponent(
-      atob(padded).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-    )
-  } catch (e) {
-    throw new Error('Invalid Base64')
-  }
-}
-
 function validateJWT(token: string): ValidationResult {
   if (!token.trim()) return { valid: false, error: 'EMPTY', message: 'Token is empty.' }
   

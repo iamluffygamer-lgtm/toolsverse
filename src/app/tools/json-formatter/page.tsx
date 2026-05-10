@@ -71,6 +71,7 @@ import WorkflowBar from '@/components/WorkflowBar'
 import ExportBar from '@/components/ExportBar'
 import { getToolById } from '@/lib/tools'
 import { consumeIncomingContent, addRecentTool } from '@/lib/session'
+import SplitPane from '@/components/ui/SplitPane'
 
 export default function JsonFormatterPage() {
   const [input, setInput] = useState('')
@@ -185,42 +186,38 @@ export default function JsonFormatterPage() {
         </div>
 
         {/* Panes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ minHeight: 380 }}>
-          {/* Input */}
-          <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-[--ts-border]">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-[--ts-border] bg-[--ts-surface]">
-              <span className="section-label">Input</span>
-              <span className="badge">{inSize}</span>
-            </div>
-            <textarea
-              value={input}
-              onChange={e => handleInputChange(e.target.value)}
-              placeholder={'Paste your JSON here...\n\nTip: it auto-formats as you type.'}
-              spellCheck={false}
-              className="flex-1 resize-none border-none outline-none bg-white text-[--ts-ink-900] font-mono text-[12.5px] leading-relaxed p-4"
-              style={{ minHeight: 340 }}
-            />
-          </div>
-
-          {/* Output */}
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-[--ts-border] bg-[--ts-surface]">
-              <span className="section-label">Output</span>
-              <div className="flex items-center gap-2">
-                {stats && <span className="badge">{stats.size}</span>}
+        <SplitPane
+          minHeight={380}
+          left={{
+            label: 'Input',
+            badge: <span className="badge">{inSize}</span>,
+            children: (
+              <textarea
+                value={input}
+                onChange={e => handleInputChange(e.target.value)}
+                placeholder={'Paste your JSON here...\n\nTip: it auto-formats as you type.'}
+                spellCheck={false}
+                className="flex-1 resize-none border-none outline-none bg-white text-[--ts-ink-900] font-mono text-[12.5px] leading-relaxed p-4 w-full h-full"
+                style={{ minHeight: 340 }}
+              />
+            )
+          }}
+          right={{
+            label: 'Output',
+            badge: stats ? <span className="badge">{stats.size}</span> : undefined,
+            children: (
+              <div
+                className="flex-1 overflow-auto p-4 font-mono text-[12.5px] leading-relaxed bg-[--ts-card-bg] h-full"
+                style={{ minHeight: 340, whiteSpace: 'pre' }}
+              >
+                {outputHL
+                  ? <div dangerouslySetInnerHTML={{ __html: outputHL }} />
+                  : <span className="text-[--ts-ink-400]">Formatted output will appear here.</span>
+                }
               </div>
-            </div>
-            <div
-              className="flex-1 overflow-auto p-4 font-mono text-[12.5px] leading-relaxed bg-[--ts-card-bg]"
-              style={{ minHeight: 340, whiteSpace: 'pre' }}
-            >
-              {outputHL
-                ? <div dangerouslySetInnerHTML={{ __html: outputHL }} />
-                : <span className="text-[--ts-ink-400]">Formatted output will appear here.</span>
-              }
-            </div>
-          </div>
-        </div>
+            )
+          }}
+        />
 
         {/* Error bar */}
         {error && (

@@ -5,7 +5,7 @@ import { marked } from 'marked'
 import { 
   Bold, Italic, Strikethrough, Heading1, Heading2, Heading3, 
   Link as LinkIcon, Image as ImageIcon, Code, SquareCode, 
-  Table as TableIcon, Quote, List, Minus, Maximize, X 
+  Table as TableIcon, Quote, List, Minus, Maximize, X, Upload
 } from 'lucide-react'
 import PageTransition from '@/components/PageTransition'
 import ToolHeader from '@/components/ToolHeader'
@@ -13,7 +13,8 @@ import WorkflowBar from '@/components/WorkflowBar'
 import ExportBar from '@/components/ExportBar'
 import { getToolById } from '@/lib/tools'
 import { consumeIncomingContent, addRecentTool } from '@/lib/session'
-import { exportAsDownload, exportToPDF, normalizeUnicodeExport } from '@/lib/export'
+import { exportAsDownload, exportToPDF } from '@/lib/export'
+import { useScrollSync } from '@/hooks/useScrollSync'
 
 marked.setOptions({
   gfm: true,
@@ -232,12 +233,12 @@ export default function MarkdownPreviewPage() {
   const [headings, setHeadings] = useState<Heading[]>([])
   const [stats, setStats] = useState<DocStats | null>(null)
   
-  const editorRef = useRef<HTMLTextAreaElement>(null)
-  const previewRef = useRef<HTMLDivElement>(null)
-  const lineNumbersRef = useRef<HTMLDivElement>(null)
+  const { primaryRef, secondaryRef, onPrimaryScroll, onSecondaryScroll } = useScrollSync()
+  const editorRef = primaryRef as unknown as React.RefObject<HTMLTextAreaElement>
+  const previewRef = secondaryRef as unknown as React.RefObject<HTMLDivElement>
   
-  const isSyncingEditor = useRef(false)
-  const isSyncingPreview = useRef(false)
+  const lineNumbersRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -282,46 +283,16 @@ export default function MarkdownPreviewPage() {
   }, [focusMode])
 
   const handleEditorScroll = () => {
-    if (isSyncingPreview.current) {
-      isSyncingPreview.current = false
-      return
-    }
-    
-    if (editorRef.current && previewRef.current) {
-      isSyncingEditor.current = true
-      const editor = editorRef.current
-      const preview = previewRef.current
-      
-      const ratio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight)
-      if (!isNaN(ratio)) {
-        preview.scrollTop = ratio * (preview.scrollHeight - preview.clientHeight)
-      }
-      
-      if (lineNumbersRef.current) {
-        lineNumbersRef.current.scrollTop = editor.scrollTop
-      }
+    onPrimaryScroll()
+    if (lineNumbersRef.current && editorRef.current) {
+      lineNumbersRef.current.scrollTop = editorRef.current.scrollTop
     }
   }
 
   const handlePreviewScroll = () => {
-    if (isSyncingEditor.current) {
-      isSyncingEditor.current = false
-      return
-    }
-    
-    if (editorRef.current && previewRef.current) {
-      isSyncingPreview.current = true
-      const editor = editorRef.current
-      const preview = previewRef.current
-      
-      const ratio = preview.scrollTop / (preview.scrollHeight - preview.clientHeight)
-      if (!isNaN(ratio)) {
-        editor.scrollTop = ratio * (editor.scrollHeight - editor.clientHeight)
-      }
-      
-      if (lineNumbersRef.current) {
-        lineNumbersRef.current.scrollTop = editor.scrollTop
-      }
+    onSecondaryScroll()
+    if (lineNumbersRef.current && editorRef.current) {
+      lineNumbersRef.current.scrollTop = editorRef.current.scrollTop
     }
   }
 
@@ -464,6 +435,38 @@ export default function MarkdownPreviewPage() {
     exportAsDownload(htmlExport, `toolstack-markdown-${Date.now()}.html`, 'text/html')
   }
 
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const content = event.target?.result as string
+      setMarkdown(content)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+    reader.readAsText(file, 'UTF-8')
+  }
+
+  const handleExportMarkdown = () => {
+    let filename = `toolstack-markdown-${Date.now()}.md`
+    if (headings.length > 0 && headings[0].level === 1) {
+      filename = `${headings[0].slug}.md`
+    }
+    
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   // ── Render Helpers ─────────────────────────────────────────────────────────────
   const lineCount = markdown.split('\n').length
   const linesArray = Array.from({ length: lineCount }, (_, i) => i + 1)
@@ -502,6 +505,15 @@ export default function MarkdownPreviewPage() {
             {/* Toolbar */}
             <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-[--ts-border] shrink-0 w-full overflow-x-auto">
               <div className="flex items-center gap-1">
+                <input 
+                  type="file" 
+                  accept=".md,.markdown,.txt" 
+                  ref={fileInputRef} 
+                  onChange={handleImport} 
+                  className="hidden" 
+                />
+                <button onClick={() => fileInputRef.current?.click()} className="p-1.5 rounded text-[--ts-ink-600] hover:bg-[--ts-surface] hover:text-[--ts-ink-900]" title="Import Markdown"><Upload size={16}/></button>
+                <div className="w-px h-4 bg-[--ts-border] mx-1" />
                 <button onClick={toolbarActions.bold} className="p-1.5 rounded text-[--ts-ink-600] hover:bg-[--ts-surface] hover:text-[--ts-ink-900]" title="Bold (Ctrl+B)"><Bold size={16}/></button>
                 <button onClick={toolbarActions.italic} className="p-1.5 rounded text-[--ts-ink-600] hover:bg-[--ts-surface] hover:text-[--ts-ink-900]" title="Italic (Ctrl+I)"><Italic size={16}/></button>
                 <button onClick={toolbarActions.strike} className="p-1.5 rounded text-[--ts-ink-600] hover:bg-[--ts-surface] hover:text-[--ts-ink-900]" title="Strikethrough (Ctrl+Shift+S)"><Strikethrough size={16}/></button>
@@ -739,6 +751,9 @@ export default function MarkdownPreviewPage() {
       {/* Action buttons override for ExportBar HTML export */}
       {!focusMode && markdown.length > 0 && (
         <div className="flex justify-end gap-2 mb-8 -mt-4 relative z-10 pr-4">
+          <button onClick={handleExportMarkdown} className="btn text-xs px-3">
+            Download MD
+          </button>
           <button onClick={handleExportHTML} className="btn text-xs px-3">
             Download HTML
           </button>
